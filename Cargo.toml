@@ -1,0 +1,11 @@
+[package]
+authors = ["Hyun Min Kim <gomgom03@gmail.com>"]
+edition = "2018"
+name = "rust_cmimc_3"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+grid = "0.2.3"
+pathfinding = "2.1.1"
