@@ -8,4 +8,5 @@ version = "0.1.0"
 
 [dependencies]
 grid = "0.2.3"
+itertools = "0.10.0"
 pathfinding = "2.1.1"
