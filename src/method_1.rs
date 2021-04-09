@@ -16,6 +16,7 @@ pub fn solve(num: i32, finder: fn(&Grid<i32>, (i32, i32), (i32, i32)) -> Vec<(i3
     let mut grid_vec: Vec<i32> = vec![];
     let mut robots: Vec<(i32, i32)> = vec![];
     let mut dest = (0, 0);
+    let directions = vec![(1, 0), (-1, 0), (0, 1), (0, -1)];
     for x in vec_data {
         if cur_row == 0 {
             let first_split = x.split(" ").collect::<Vec<&str>>();
@@ -51,12 +52,67 @@ pub fn solve(num: i32, finder: fn(&Grid<i32>, (i32, i32), (i32, i32)) -> Vec<(i3
     drop(data);
     let world_grid = Grid::from_vec(grid_vec, dim_y as usize);
 
-    let cur_move_set = find_move_set(finder(&world_grid, robots[0], dest));
-    println!("{:?}", robots);
-    move_robots(cur_move_set.1, &mut robots, dim_x, dim_y, &world_grid);
-    robots = deduplicate(robots);
-    robots = remove_robots_done(robots, dest);
-    println!("{:?}", robots);
+    let mut solution = String::from("");
+    while !robots.is_empty() {
+        //break; //remove this.
+        let mut current = vec![];
+        for cur_robot in &robots {
+            current.push(find_move_set(
+                finder(&world_grid, *cur_robot, dest),
+                &directions,
+            ));
+        }
+        current.sort_by(|a, b| b.1.len().cmp(&(a.1.len() as usize)));
+
+        for i in 0..(current.len() - 1) {
+            let mut min_len: i32 = -1;
+            let mut min_path: Vec<&(i32, i32)> = vec![&(-1, -1)];
+            let mut min_path_str: String = String::from("");
+            for j in (i + 1)..(current.len()) {
+                let t_path_all =
+                    find_move_set(finder(&world_grid, robots[i], robots[j]), &directions);
+                let t_path = t_path_all.1;
+                let t_path_str = t_path_all.0;
+                let t_path_len = t_path.len() as i32;
+                // t_path robot[i] to robot[j] -->moveset
+                if (min_len == -1 || t_path_len < min_len)
+                    && t_path_len <= current[j].1.len() as i32
+                {
+                    min_len = t_path_len;
+                    min_path = t_path;
+                    min_path_str.push_str(&t_path_str);
+                }
+                // if (min_len == -1 || t_path len < min_len) && min_len < path from j to destination.{
+                //     update minlen and minpath
+                // }
+            }
+            if min_len != -1 {
+                println!("{}", min_len);
+                break;
+                // robot1tup, robot2tup
+                // while(robot1tup != robot2tup){
+                //     find path and moveset
+                //     apply to robot1up and robot2up
+                //     add moveset path to min_path and add moveset str to moves
+                // }
+                // apply tup to all robots.
+                // deduplicate and remove robots done.
+                // add moves to solution
+                // break
+            }
+            if i == current.len() - 1 {
+                //code for doing astar for the closest one.
+                //should this be the longest one?
+            }
+        }
+    }
+    println!("{}", solution);
+    // let cur_move_set = find_move_set(finder(&world_grid, robots[0], dest));
+    // println!("{:?}", robots);
+    // move_robots(cur_move_set.1, &mut robots, dim_x, dim_y, &world_grid);
+    // robots = deduplicate(robots);
+    // robots = remove_robots_done(robots, dest);
+    // println!("{:?}", robots);
 
     /*
     let mut solution = String::from("");
@@ -107,21 +163,32 @@ pub fn solve(num: i32, finder: fn(&Grid<i32>, (i32, i32), (i32, i32)) -> Vec<(i3
     //println!("{:#?}", (dim_x, dim_y, num_robots));
 }
 
-fn find_move_set(moves: Vec<(i32, i32)>) -> (String, Vec<(i32, i32)>) {
+fn find_move_set(moves: Vec<(i32, i32)>, dir: &Vec<(i32, i32)>) -> (String, Vec<&(i32, i32)>) {
     let mut prev = moves[0];
     let mut rt_moves = String::from("");
-    let mut rt_moves_tuple: Vec<(i32, i32)> = vec![];
+    let mut rt_moves_tuple: Vec<&(i32, i32)> = vec![];
     for pos in moves {
         let cur_tup = (pos.0 - prev.0, pos.1 - prev.1);
         match cur_tup {
-            (1, 0) => rt_moves.push('D'),
-            (-1, 0) => rt_moves.push('U'),
-            (0, 1) => rt_moves.push('R'),
-            (0, -1) => rt_moves.push('L'),
+            (1, 0) => {
+                rt_moves.push('D');
+                rt_moves_tuple.push(&dir[0]);
+            }
+            (-1, 0) => {
+                rt_moves.push('U');
+                rt_moves_tuple.push(&dir[1]);
+            }
+            (0, 1) => {
+                rt_moves.push('R');
+                rt_moves_tuple.push(&dir[2]);
+            }
+            (0, -1) => {
+                rt_moves.push('L');
+                rt_moves_tuple.push(&dir[3]);
+            }
             _ => {}
         }
         prev = pos;
-        rt_moves_tuple.push(cur_tup);
     }
     return (rt_moves, rt_moves_tuple);
 }
